@@ -199,7 +199,7 @@ ga_search(const Cities& cities,
           unsigned nthread = 1)
 {
   //auto best_dist = 1e100 + nthread; // Eliminate silly warning
-  auto best_ordering = Cities::permutation_t(cities.size());
+  auto best_ordering = random_permutation(cities.size());
 
 
   auto best_mutex = std::mutex();
@@ -208,7 +208,6 @@ ga_search(const Cities& cities,
   auto run_one_thread = [&]() {
     //while (evaluated < iters) {
     auto my_best = baby_search(cities, iters / nthread, pop_size, mutation_rate); // we probably need to use nthread one more time
-
     if (cities.total_path_distance(my_best) < cities.total_path_distance(best_ordering)) {
       auto guard = std::scoped_lock(best_mutex);
       // Repeat check, maybe something changed:
@@ -226,7 +225,7 @@ ga_search(const Cities& cities,
   for (auto& t : threads) {
     t.join();
   }
-  std::cout<< nthread << std::endl;
+
   return best_ordering;
 }
 
@@ -256,6 +255,7 @@ int main(int argc, char** argv)
 //  const auto best_ordering = threaded_randomized_search(cities, NUM_ITER, nthread);
 //const auto best_ordering = granular_randomized_search(cities, NUM_ITER, nthread, granularity);
   const auto best_ordering = ga_search(cities, NUM_ITER, pop_size, mut_rate, nthread);
+  std::cout<< "best " << " " << cities.total_path_distance(best_ordering)<<std::endl;
 
   auto out = std::ofstream("shortest.tsv");
   if (!out.is_open()) {
